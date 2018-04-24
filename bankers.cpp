@@ -19,11 +19,7 @@ pthread_cond_t condition = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t resource_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-void* customer_func(void* ID) {
-    int id = * (int*) ID;
-    std::cout << "Hello from thread number "<< id << std::endl;
-    pthread_exit(NULL);
-}
+
 
 
 int resource_request(int customer_num, int request[]) {
@@ -42,13 +38,50 @@ int resource_release(int customer_num, int release[]) {
     return 0;
 }
 
+/* void* customer_func(void* ID)
+        perform customer functions, request, release resources
+*/
+void* customer_func(void* ID) {
+    int id = * (int*) ID;
+    printf("Initialized Customer Number %d\n", id);
 
+    while (true) {
+        if (rand()%2 == 0) { //request
+            int resources[NUM_RESOURCES] = {0};
+            for (int i=0; i<NUM_RESOURCES; i++) {
+                resources[i] = rand()%(need[id][i]+1);
+            }
+            resource_request(id, resources);
+        }
+        else { //release
+            int resources[NUM_RESOURCES] = {0};
+            for (int i=0; i<NUM_RESOURCES; i++) {
+                resources[i] = rand()%(allocation[id][i]+1);
+            }
+            resource_release(id, resources);
+        }
+    }
+
+    pthread_exit(NULL);
+}
+
+/* int main(int argc, char* argv[])
+        initialize arrays and spin up threads for NUM_CUSTOMERS
+*/
 int main(int argc, char* argv[]) {
 
     if (argc != NUM_RESOURCES+1) {
         //wrong number of arguments
         printf("Program requires %d arguments.\n", NUM_RESOURCES);
         exit(1);
+    }
+
+    for (int i = 1; i < argc; i++) {
+        if (atoi(argv[i]) < 3) {
+            //argument too small
+            printf("Program requires arguments to be greater than 2.\n");
+            exit(1);
+        }
     }
 
     // initialize resouce array
